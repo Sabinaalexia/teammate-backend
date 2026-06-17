@@ -43,7 +43,9 @@ public class ProjectService {
                 .description(request.getDescription())
                 .deadline(request.getDeadline())
                 .startDate(request.getStartDate())
-                .status(ProjectStatus.ACTIVE)
+                .status(request.getStartDate() != null && request.getStartDate().isAfter(LocalDate.now())
+                        ? ProjectStatus.NOT_STARTED
+                        : ProjectStatus.ACTIVE)
                 .creatorId(creatorId)
                 .build();
 

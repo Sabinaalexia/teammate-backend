@@ -7,6 +7,7 @@ import com.studentprojects.teammate.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,13 +43,33 @@ public class PhaseService {
         }
 
         phase.setConfirmedByScrum(true);
+
+        // ── Redistribuire zile rămase la sprint-ul următor ──
+        LocalDate azi = LocalDate.now();
+        LocalDate endPlanificat = phase.getEndDate();
+        List<Phase> allPhases = phaseRepository.findByProjectIdOrderByOrderIndexAsc(phase.getProjectId());
+        if (endPlanificat != null && azi.isBefore(endPlanificat)) {
+            long zileRamase = java.time.temporal.ChronoUnit.DAYS.between(azi, endPlanificat);
+            allPhases.stream()
+                    .filter(p -> p.getOrderIndex() != null && p.getOrderIndex() == phase.getOrderIndex() + 1)
+                    .findFirst()
+                    .ifPresent(nextPhase -> {
+                        if (nextPhase.getEndDate() != null) {
+                            nextPhase.setStartDate(azi);
+                            nextPhase.setEndDate(nextPhase.getEndDate().plusDays(zileRamase));
+                            phaseRepository.save(nextPhase);
+                        }
+                    });
+            phase.setEndDate(azi);
+        }
+// ────────────────────────────────────────────────────
         phase.setStatus(PhaseStatus.COMPLETED);
         phaseRepository.save(phase);
 
         // Notificare scrum — felicitări
         String scrumMsg;
         // Verifică dacă e ultimul sprint
-        List<Phase> allPhases = phaseRepository.findByProjectIdOrderByOrderIndexAsc(phase.getProjectId());
+
         boolean isLastPhase = allPhases.stream()
                 .filter(p -> !p.getId().equals(phaseId))
                 .allMatch(Phase::isConfirmedByScrum);
