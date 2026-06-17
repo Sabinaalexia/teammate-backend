@@ -5,7 +5,9 @@ import com.studentprojects.teammate.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
+import com.studentprojects.teammate.entity.Project;
+import com.studentprojects.teammate.entity.ProjectStatus;
+import com.studentprojects.teammate.repository.ProjectRepository;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -18,6 +20,7 @@ public class SprintDeadlineScheduler {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final NotificationService notificationService;
+
 
     @Scheduled(cron = "0 0 17 * * *") // rulează în fiecare zi la 16:00
     public void checkSprintDeadlines() {
@@ -61,5 +64,17 @@ public class SprintDeadlineScheduler {
                         ));
             }
         }
+    }
+    @Scheduled(cron = "0 1 0 * * *") // rulează în fiecare zi la 00:01
+    public void activateProjects() {
+        LocalDate azi = LocalDate.now();
+
+        projectRepository.findAll().stream()
+                .filter(p -> p.getStatus() == ProjectStatus.NOT_STARTED)
+                .filter(p -> p.getStartDate() != null && !p.getStartDate().isAfter(azi))
+                .forEach(p -> {
+                    p.setStatus(ProjectStatus.ACTIVE);
+                    projectRepository.save(p);
+                });
     }
 }
