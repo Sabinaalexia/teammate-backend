@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*",
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "https://teammate-frontend-production.up.railway.app"}, allowedHeaders = "*",
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
                 RequestMethod.DELETE, RequestMethod.OPTIONS})
 public class AuthController {
